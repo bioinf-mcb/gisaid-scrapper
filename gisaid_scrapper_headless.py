@@ -14,8 +14,13 @@ import tqdm
 import glob
 import os
 
+
 class GisaidCoVScrapper:
-    def __init__(self, headless=False, destination="fastas"):
+    def __init__(self, headless: bool = False,
+                 whole_genome_only: bool = True,
+                 destination: str = "fastas"):
+        self.whole_genome_only = whole_genome_only
+
         options = Options()
         options.headless = headless
 
@@ -28,10 +33,11 @@ class GisaidCoVScrapper:
         self.already_downloaded = self._read_cache()
 
     def _read_cache(self):
-        res = [i.split("\\")[-1].split(".")[0] for i in glob.glob(f"{self.destination}/*.fasta")]
+        res = [i.split("\\")[-1].split(".")[0]
+               for i in glob.glob(f"{self.destination}/*.fasta")]
         return res
 
-    def login(self, username, password):
+    def login(self, username: str, password: str):
         self.driver.get("https://platform.gisaid.org/epi3/frontend")
         time.sleep(2)
         login = self.driver.find_element_by_name("login")
@@ -39,24 +45,31 @@ class GisaidCoVScrapper:
 
         passwd = self.driver.find_element_by_name("password")
         passwd.send_keys(password)
-        login_box = self.driver.find_element_by_class_name("form_button_submit")
+        login_box = self.driver.find_element_by_class_name(
+            "form_button_submit")
 
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
-        self.driver.execute_script("document.getElementsByClassName('form_button_submit')[0].click()")
-        WebDriverWait(self.driver,30).until(cond.staleness_of(login_box))
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
+        self.driver.execute_script(
+            "document.getElementsByClassName('form_button_submit')[0].click()")
+        WebDriverWait(self.driver, 30).until(cond.staleness_of(login_box))
 
-    def _go_to_epicov(self):
+    def go_to_epicov(self):
         time.sleep(2)
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
         self.driver.find_element_by_link_text("EpiCoV™").click()
         time.sleep(2)
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
-        self.driver.find_elements_by_xpath("//*[contains(text(), 'Browse')]")[0].click()
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
+        self.driver.find_elements_by_xpath(
+            "//*[contains(text(), 'Browse')]")[0].click()
         time.sleep(2)
 
         parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
-        inp = parent_form.find_element_by_tag_name("input")
-        inp.click()
+        if self.whole_genome_only:
+            inp = parent_form.find_element_by_tag_name("input")
+            inp.click()
 
     def download_from_curr_page(self):
         time.sleep(2)
@@ -97,7 +110,8 @@ class GisaidCoVScrapper:
         time.sleep(2)
 
     def go_to_next_page(self):
-        self.driver.find_elements_by_xpath("//*[contains(text(), 'next >')]")[0].click()
+        self.driver.find_elements_by_xpath(
+            "//*[contains(text(), 'next >')]")[0].click()
 
     def _save_data(self, fasta, name):
         with open(f"{self.destination}/{name}.fasta", "w") as f:
@@ -110,9 +124,9 @@ with open("credentials.txt") as f:
     login = f.readline()
     passwd = f.readline()
 
-scrapper = GisaidCoVScrapper(False)
+scrapper = GisaidCoVScrapper(False, False, "fastas_all")
 scrapper.login(login, passwd)
-scrapper._go_to_epicov()
+scrapper.go_to_epicov()
 
 while True:
     scrapper.download_from_curr_page()
