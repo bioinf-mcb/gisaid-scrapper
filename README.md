@@ -10,3 +10,6 @@ password
 ## Usage
 `python3 gisaid_scrapper_headless.py` should run the scrapper in headless mode. If you need a browser window, you can specify it 
 by changing `True` to `False` in the line `scrapper = GisaidCoVScrapper(False)`
+
+## Result
+The whole genom sequences from GISAID will be downloaded into `fastas/` directory.
