@@ -15,7 +15,7 @@ import glob
 import os
 
 class GisaidCoVScrapper:
-    def __init__(self, headless=True, destination="fastas"):
+    def __init__(self, headless=False, destination="fastas"):
         options = Options()
         options.headless = headless
 
@@ -110,7 +110,7 @@ with open("credentials.txt") as f:
     login = f.readline()
     passwd = f.readline()
 
-scrapper = GisaidCoVScrapper(False)
+scrapper = GisaidCoVScrapper(True)
 scrapper.login(login, passwd)
 scrapper._go_to_epicov()
 
