@@ -9,4 +9,4 @@ password
 
 ## Usage
 `python3 gisaid_scrapper_headless.py` should run the scrapper in headless mode. If you need a browser window, you can specify it 
-by changing `False` to `True` in the line `scrapper = GisaidCoVScrapper(False)`
+by changing `True` to `False` in the line `scrapper = GisaidCoVScrapper(False)`
