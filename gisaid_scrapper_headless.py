@@ -141,15 +141,15 @@ class GisaidCoVScrapper:
             "//*[contains(text(), 'next >')]").click()
         self._update_metainfo()
 
+if __name__=="__main__":
+    with open("credentials.txt") as f:
+        login = f.readline()
+        passwd = f.readline()
 
-with open("credentials.txt") as f:
-    login = f.readline()
-    passwd = f.readline()
+    scrapper = GisaidCoVScrapper(False, False, "fastas_all")
+    scrapper.login(login, passwd)
+    scrapper.load_epicov()
 
-scrapper = GisaidCoVScrapper(False, False, "fastas_all")
-scrapper.login(login, passwd)
-scrapper.load_epicov()
-
-while not scrapper.finished:
-    scrapper.download_from_curr_page()
-    scrapper.go_to_next_page()
+    while not scrapper.finished:
+        scrapper.download_from_curr_page()
+        scrapper.go_to_next_page()
