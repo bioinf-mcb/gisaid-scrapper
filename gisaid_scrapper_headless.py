@@ -10,7 +10,6 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.common.action_chains import ActionChains
-import hashlib
 import tqdm
 import glob
 import os
