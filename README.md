@@ -7,6 +7,8 @@ login
 password
 ```
 
+The tool was written for personal use, so little to no maintenance is to be expected.
+
 ## Usage
 `python3 gisaid_scrapper_headless.py` should run the scrapper in headless mode. If you need a browser window, you can specify it 
 by changing `True` to `False` in the line `scrapper = GisaidCoVScrapper(False)`
