@@ -110,7 +110,7 @@ with open("credentials.txt") as f:
     login = f.readline()
     passwd = f.readline()
 
-scrapper = GisaidCoVScrapper(True)
+scrapper = GisaidCoVScrapper(False)
 scrapper.login(login, passwd)
 scrapper._go_to_epicov()
 
