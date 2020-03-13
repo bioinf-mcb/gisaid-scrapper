@@ -19,23 +19,22 @@ class GisaidCoVScrapper:
     def __init__(self, headless: bool = False,
                  whole_genome_only: bool = True,
                  destination: str = "fastas"):
+
         self.whole_genome_only = whole_genome_only
+        self.destination = destination
+        self.finished = False
+        self.already_downloaded = 0
+        self.samples_count = None
 
         options = Options()
         options.headless = headless
-
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(1000)
 
-        self.destination = destination
         if not os.path.exists(destination):
             os.makedirs(destination)
-        self.already_downloaded = self._read_cache()
 
-    def _read_cache(self):
-        res = [i.split("\\")[-1].split(".")[0]
-               for i in glob.glob(f"{self.destination}/*.fasta")]
-        return res
+        self._update_cache()
 
     def login(self, username: str, password: str):
         self.driver.get("https://platform.gisaid.org/epi3/frontend")
@@ -54,8 +53,17 @@ class GisaidCoVScrapper:
             "document.getElementsByClassName('form_button_submit')[0].click()")
         WebDriverWait(self.driver, 30).until(cond.staleness_of(login_box))
 
-    def go_to_epicov(self):
+    def load_epicov(self):
         time.sleep(2)
+        self._go_to_seq_browser()
+
+        if self.whole_genome_only:
+            parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
+            inp = parent_form.find_element_by_tag_name("input")
+            inp.click()
+            time.sleep(2)
+
+    def _go_to_seq_browser(self):
         self.driver.execute_script(
             "document.getElementById('sys_curtain').remove()")
         self.driver.find_element_by_link_text("EpiCoV™").click()
@@ -66,28 +74,34 @@ class GisaidCoVScrapper:
             "//*[contains(text(), 'Browse')]")[0].click()
         time.sleep(2)
 
-        parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
-        if self.whole_genome_only:
-            inp = parent_form.find_element_by_tag_name("input")
-            inp.click()
+    def _update_metainfo(self):
+        self.samples_count = int(self.driver.find_elements_by_xpath(
+            "//*[contains(text(), 'Total:')]")[0].text.split(" ")[1])
+        self._update_cache()
+
+    def _update_cache(self):
+        res = [i.split("\\")[-1].split(".")[0]
+               for i in glob.glob(f"{self.destination}/*.fasta")]
+        self.already_downloaded = res
+
+        if self.samples_count is not None:
+            samples_left = len(res) - self.samples_count
+            if samples_left>0:
+                self.finished = True
+                print("Finished!")
+            else:
+                print(samples_left, "samples left")
+                self.finished = False
 
     def download_from_curr_page(self):
         time.sleep(2)
 
         parent_form = self.driver.find_element_by_class_name("yui-dt-data")
         rows = parent_form.find_elements_by_tag_name("tr")
-        print(len(rows))
         time.sleep(2)
 
         for i in tqdm.trange(len(rows)):
             self._download_row(parent_form, i)
-
-    def _action_click(self, element):
-        action = ActionChains(self.driver)
-        action.move_to_element(element).perform()
-        time.sleep(1)
-        element.click()
-        time.sleep(1)
 
     def _download_row(self, parent_form, row_id):
         row = parent_form.find_elements_by_tag_name("tr")[row_id]
@@ -109,15 +123,23 @@ class GisaidCoVScrapper:
         self.driver.switch_to.default_content()
         time.sleep(2)
 
-    def go_to_next_page(self):
-        self.driver.find_elements_by_xpath(
-            "//*[contains(text(), 'next >')]")[0].click()
-
     def _save_data(self, fasta, name):
         with open(f"{self.destination}/{name}.fasta", "w") as f:
             for line in fasta.upper().split("\n"):
                 f.write(line.strip())
                 f.write("\n")
+
+    def _action_click(self, element):
+        action = ActionChains(self.driver)
+        action.move_to_element(element).perform()
+        time.sleep(1)
+        element.click()
+        time.sleep(1)
+
+    def go_to_next_page(self):
+        self.driver.find_element_by_xpath(
+            "//*[contains(text(), 'next >')]").click()
+        self._update_metainfo()
 
 
 with open("credentials.txt") as f:
@@ -126,8 +148,8 @@ with open("credentials.txt") as f:
 
 scrapper = GisaidCoVScrapper(False, False, "fastas_all")
 scrapper.login(login, passwd)
-scrapper.go_to_epicov()
+scrapper.load_epicov()
 
-while True:
+while not scrapper.finished:
     scrapper.download_from_curr_page()
     scrapper.go_to_next_page()
