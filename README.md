@@ -15,7 +15,7 @@ password
 ```
 
 ## Usage
-`python3 gisaid_scrapper_headless.py` should run the scrapper. If you need a headless mode, you can specify it 
+`python3 gisaid_scrapper.py` should run the scrapper. If you need a headless mode, you can specify it 
 by changing `False` to `True` in the line `scrapper = GisaidCoVScrapper(False)`
 
 ## Result
