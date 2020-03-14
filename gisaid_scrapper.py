@@ -77,7 +77,6 @@ class GisaidCoVScrapper:
             "document.getElementById('sys_curtain').remove()")
         self.driver.find_elements_by_xpath(
             "//*[contains(text(), 'Browse')]")[0].click()
-        print("Clicked browse")
 
     def _update_metainfo(self):
         self.samples_count = int(self.driver.find_elements_by_xpath(
