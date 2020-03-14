@@ -168,9 +168,12 @@ class GisaidCoVScrapper:
 
         res = f"{name}\t"
         for line in metadata:
-            info = line.text.split(":")[1].strip().replace("\n", "")
-            res += info
-            res += "\t"
+            try:
+                info = line.text.split(":")[1].strip().replace("\n", "")
+                res += info
+                res += "\t"
+            except IndexError:
+                res += "\t"
         res += str(len(fasta))
         self.metadata_handle.write(res + "\n")
 
