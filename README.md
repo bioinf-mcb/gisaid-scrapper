@@ -19,6 +19,27 @@ password
 by changing `False` to `True` in the line `scrapper = GisaidCoVScrapper(False)`
 
 ## Result
-The whole genom sequences from GISAID will be downloaded into `fastas/` directory. You can interrupt the download and resume it later, the samples won't be downloaded twice.
+The whole genom sequences from GISAID will be downloaded into `fastas/` directory. You can interrupt the download and resume it later, the samples won't be downloaded twice. `metadata.tsv` file will also be created, containing following information for every sample:
+
+* Accession
+* Collection date	
+* Location	
+* Host	
+* Additional location information	
+* Gender	
+* Patient age	
+* Patient status	
+* Specimen source	
+* Additional host information	
+* Outbreak	
+* Last vaccinated	
+* Treatment	
+* Sequencing technology	
+* Assembly method	
+* Coverage	
+* Comment	
+* Length
+
+as long as they were provided.
 
 The tool was written for personal use, so little to no maintenance is to be expected.
