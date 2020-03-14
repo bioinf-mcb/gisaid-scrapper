@@ -14,11 +14,35 @@ import tqdm
 import glob
 import os
 
+METADATA_COLUMNS = [
+    "Accession",
+    "Collection date",
+    "Location",
+    "Host",
+    "Additional location information",
+    "Gender",
+    "Patient age",
+    "Patient status",
+    "Specimen source",
+    "Additional host information",
+    "Outbreak",
+    "Last vaccinated",
+    "Treatment",
+    "Sequencing technology",
+    "Assembly method",
+    "Coverage",
+    "Comment",
+    "Length"
+]
+
 
 class GisaidCoVScrapper:
-    def __init__(self, headless: bool = False,
-                 whole_genome_only: bool = True,
-                 destination: str = "fastas"):
+    def __init__(
+        self,
+        headless: bool = False,
+        whole_genome_only: bool = True,
+        destination: str = "fastas",
+    ):
 
         self.whole_genome_only = whole_genome_only
         self.destination = destination
@@ -36,6 +60,11 @@ class GisaidCoVScrapper:
             os.makedirs(destination)
 
         self._update_cache()
+        if os.path.isfile(destination + "/metadata.tsv"):
+            self.metadata_handle = open(destination + "/metadata.tsv", "a")
+        else:
+            self.metadata_handle = open(destination + "/metadata.tsv", "w")
+            self.metadata_handle.write("\t".join(METADATA_COLUMNS) + "\n")
 
     def login(self, username: str, password: str):
         self.driver.get("https://platform.gisaid.org/epi3/frontend")
@@ -45,13 +74,12 @@ class GisaidCoVScrapper:
 
         passwd = self.driver.find_element_by_name("password")
         passwd.send_keys(password)
-        login_box = self.driver.find_element_by_class_name(
-            "form_button_submit")
+        login_box = self.driver.find_element_by_class_name("form_button_submit")
 
+        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
         self.driver.execute_script(
-            "document.getElementById('sys_curtain').remove()")
-        self.driver.execute_script(
-            "document.getElementsByClassName('form_button_submit')[0].click()")
+            "document.getElementsByClassName('form_button_submit')[0].click()"
+        )
         WebDriverWait(self.driver, 30).until(cond.staleness_of(login_box))
 
     def load_epicov(self):
@@ -67,30 +95,32 @@ class GisaidCoVScrapper:
         self._update_metainfo()
 
     def _go_to_seq_browser(self):
-        self.driver.execute_script(
-            "document.getElementById('sys_curtain').remove()")
+        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
         self.driver.find_element_by_link_text("EpiCoV™").click()
 
         time.sleep(3)
 
-        self.driver.execute_script(
-            "document.getElementById('sys_curtain').remove()")
-        self.driver.find_elements_by_xpath(
-            "//*[contains(text(), 'Browse')]")[0].click()
+        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+        self.driver.find_elements_by_xpath("//*[contains(text(), 'Browse')]")[0].click()
 
     def _update_metainfo(self):
-        self.samples_count = int(self.driver.find_elements_by_xpath(
-            "//*[contains(text(), 'Total:')]")[0].text.split(" ")[1])
+        self.samples_count = int(
+            self.driver.find_elements_by_xpath("//*[contains(text(), 'Total:')]")[
+                0
+            ].text.split(" ")[1]
+        )
         self._update_cache()
 
     def _update_cache(self):
-        res = [i.split("\\")[-1].split(".")[0]
-               for i in glob.glob(f"{self.destination}/*.fasta")]
+        res = [
+            i.split("\\")[-1].split(".")[0]
+            for i in glob.glob(f"{self.destination}/*.fasta")
+        ]
         self.already_downloaded = res
 
         if self.samples_count is not None:
             samples_left = self.samples_count - len(res)
-            if samples_left>0:
+            if samples_left > 0:
                 print(samples_left, "samples left")
                 self.finished = False
             else:
@@ -117,11 +147,8 @@ class GisaidCoVScrapper:
         self._action_click(col)
 
         iframe = self.driver.find_elements_by_tag_name("iframe")[0]
-        self.driver.switch_to.frame(iframe)
-        pre = self.driver.find_elements_by_tag_name("pre")[0]
 
-        fasta = pre.text
-        self._save_data(fasta, name)
+        self._save_data(iframe, name)
 
         self._action_click(self.driver.find_elements_by_tag_name("button")[1])
         self.driver.switch_to.default_content()
@@ -129,8 +156,25 @@ class GisaidCoVScrapper:
 
         self.new_downloaded += 1
 
+    def _save_data(self, iframe, name):
+        self.driver.switch_to.frame(iframe)
+        pre = self.driver.find_elements_by_tag_name("pre")[0]
+        fasta = pre.text
 
-    def _save_data(self, fasta, name):
+        # Handle metadata
+        metadata = self.driver.find_elements_by_xpath(
+            "//b[contains(text(), 'Sample information')]/../../following-sibling::tr"
+        )[:16]
+
+        res = f"{name}\t"
+        for line in metadata:
+            info = line.text.split(":")[1].strip().replace("\n", "")
+            res += info
+            res += "\t"
+        res += str(len(fasta))
+        self.metadata_handle.write(res + "\n")
+
+        # Save FASTA
         with open(f"{self.destination}/{name}.fasta", "w") as f:
             for line in fasta.upper().split("\n"):
                 f.write(line.strip())
@@ -144,11 +188,11 @@ class GisaidCoVScrapper:
         time.sleep(1)
 
     def go_to_next_page(self):
-        self.driver.find_element_by_xpath(
-            "//*[contains(text(), 'next >')]").click()
+        self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
         self._update_metainfo()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     with open("credentials.txt") as f:
         login = f.readline()
         passwd = f.readline()
