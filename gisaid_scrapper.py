@@ -25,6 +25,7 @@ class GisaidCoVScrapper:
         self.finished = False
         self.already_downloaded = 0
         self.samples_count = None
+        self.new_downloaded = 0
 
         options = Options()
         options.headless = headless
@@ -63,16 +64,20 @@ class GisaidCoVScrapper:
             inp.click()
             time.sleep(2)
 
+        self._update_metainfo()
+
     def _go_to_seq_browser(self):
         self.driver.execute_script(
             "document.getElementById('sys_curtain').remove()")
         self.driver.find_element_by_link_text("EpiCoV™").click()
-        time.sleep(2)
+
+        time.sleep(3)
+
         self.driver.execute_script(
             "document.getElementById('sys_curtain').remove()")
         self.driver.find_elements_by_xpath(
             "//*[contains(text(), 'Browse')]")[0].click()
-        time.sleep(2)
+        print("Clicked browse")
 
     def _update_metainfo(self):
         self.samples_count = int(self.driver.find_elements_by_xpath(
@@ -85,20 +90,20 @@ class GisaidCoVScrapper:
         self.already_downloaded = res
 
         if self.samples_count is not None:
-            samples_left = len(res) - self.samples_count
+            samples_left = self.samples_count - len(res)
             if samples_left>0:
-                self.finished = True
-                print("Finished!")
-            else:
                 print(samples_left, "samples left")
                 self.finished = False
+            else:
+                self.finished = True
+                print("Finished!")
 
     def download_from_curr_page(self):
-        time.sleep(2)
+        time.sleep(1)
 
         parent_form = self.driver.find_element_by_class_name("yui-dt-data")
         rows = parent_form.find_elements_by_tag_name("tr")
-        time.sleep(2)
+        # time.sleep(2)
 
         for i in tqdm.trange(len(rows)):
             self._download_row(parent_form, i)
@@ -121,7 +126,10 @@ class GisaidCoVScrapper:
 
         self._action_click(self.driver.find_elements_by_tag_name("button")[1])
         self.driver.switch_to.default_content()
-        time.sleep(2)
+        time.sleep(1)
+
+        self.new_downloaded += 1
+
 
     def _save_data(self, fasta, name):
         with open(f"{self.destination}/{name}.fasta", "w") as f:
@@ -153,3 +161,4 @@ if __name__=="__main__":
     while not scrapper.finished:
         scrapper.download_from_curr_page()
         scrapper.go_to_next_page()
+    print("New samples:", scrapper.new_downloaded)
