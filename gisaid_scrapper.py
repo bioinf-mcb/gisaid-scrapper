@@ -13,6 +13,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 import tqdm
 import glob
 import os
+import sys
+import argparse, sys
 
 METADATA_COLUMNS = [
     "Accession",
@@ -43,8 +45,8 @@ class GisaidCoVScrapper:
         whole_genome_only: bool = True,
         destination: str = "fastas",
     ):
-
         self.whole_genome_only = whole_genome_only
+
         self.destination = destination
         self.finished = False
         self.already_downloaded = 0
@@ -87,6 +89,7 @@ class GisaidCoVScrapper:
         self._go_to_seq_browser()
 
         if self.whole_genome_only:
+            print("Clicking")
             parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
             inp = parent_form.find_element_by_tag_name("input")
             inp.click()
@@ -194,13 +197,50 @@ class GisaidCoVScrapper:
         self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
         self._update_metainfo()
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+def parse_args():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--username', '-u', help="Username for GISAID", type=str)
+    parser.add_argument('--password', '-p', help="Password for GISAID", type=str)
+    parser.add_argument('--filename', '-f', help="Path to file with credentials (alternative, default: credentials.txt)", type=str, default="credentials.txt")
+    parser.add_argument('--destination', '-d', help="Destination directory (default: fastas/)", type=str, default="fastas/")
+    parser.add_argument('--headless', '-q', help="Headless mode of scraping (experimental)", type=str2bool, nargs='?', default=False)
+    parser.add_argument('--whole', '-w', help="Scrap whole genomes only", type=str2bool, nargs='?', default=False)
+
+    args = parser.parse_args()
+    args.headless = True if args.headless is None else args.headless
+    args.whole = True if args.whole is None else args.whole  
+    return args
 
 if __name__ == "__main__":
-    with open("credentials.txt") as f:
-        login = f.readline()
-        passwd = f.readline()
+    args = parse_args()
 
-    scrapper = GisaidCoVScrapper(False, False, "fastas_all")
+    if args.username is None or args.password is None:
+        if args.filename is None:
+            print(parser.format_help())
+            sys.exit(-1)
+        try:
+            with open(args.filename) as f:
+                login = f.readline()
+                passwd = f.readline()
+        except FileNotFoundError:
+            print("File not found.")
+            print(parser.format_help())
+            sys.exit(-1)
+    else:
+        login = args.username
+        passwd = args.password
+
+    scrapper = GisaidCoVScrapper(args.headless, args.whole, args.destination)
     scrapper.login(login, passwd)
     scrapper.load_epicov()
 
