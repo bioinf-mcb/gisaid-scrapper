@@ -63,9 +63,9 @@ class GisaidCoVScrapper:
 
         self._update_cache()
         if os.path.isfile(destination + "/metadata.tsv"):
-            self.metadata_handle = open(destination + "/metadata.tsv", "a")
+            self.metadata_handle = open(destination + "/metadata.tsv", "a", encoding='utf-8')
         else:
-            self.metadata_handle = open(destination + "/metadata.tsv", "w")
+            self.metadata_handle = open(destination + "/metadata.tsv", "w", encoding='utf-8')
             self.metadata_handle.write("\t".join(METADATA_COLUMNS) + "\n")
 
     def login(self, username: str, password: str):
