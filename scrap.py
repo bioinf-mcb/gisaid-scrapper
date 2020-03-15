@@ -1,6 +1,8 @@
 import argparse, sys
 from gisaid_scrapper import GisaidCoVScrapper
 
+
+
 def str2bool(v):
     if isinstance(v, bool):
        return v
@@ -23,11 +25,10 @@ def parse_args():
     args = parser.parse_args()
     args.headless = True if args.headless is None else args.headless
     args.whole = True if args.whole is None else args.whole  
+    args.fix_headers = True if args.fix_headers is None else args.fix_headers  
     return args
 
-if __name__ == "__main__":
-    args = parse_args()
-
+def get_credentials(args):
     if args.username is None or args.password is None:
         if args.filename is None:
             print(parser.format_help())
@@ -43,6 +44,13 @@ if __name__ == "__main__":
     else:
         login = args.username
         passwd = args.password
+
+    return login, passwd
+
+if __name__ == "__main__":
+    args = parse_args()
+        
+    login, passwd = get_credentials(args)
 
     scrapper = GisaidCoVScrapper(args.headless, args.whole, args.destination)
     scrapper.login(login, passwd)
