@@ -25,7 +25,6 @@ def parse_args():
     args = parser.parse_args()
     args.headless = True if args.headless is None else args.headless
     args.whole = True if args.whole is None else args.whole  
-    args.fix_headers = True if args.fix_headers is None else args.fix_headers  
     return args
 
 def get_credentials(args):
