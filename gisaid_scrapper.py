@@ -5,8 +5,7 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as cond
-from selenium.common.exceptions import NoAlertPresentException
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoAlertPresentException, MoveTargetOutOfBoundsException, TimeoutException
 from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.common.action_chains import ActionChains
@@ -14,7 +13,6 @@ import tqdm
 import glob
 import os
 import sys
-import argparse, sys
 
 METADATA_COLUMNS = [
     "Accession",
@@ -37,7 +35,6 @@ METADATA_COLUMNS = [
     "Length"
 ]
 
-
 class GisaidCoVScrapper:
     def __init__(
         self,
@@ -57,6 +54,7 @@ class GisaidCoVScrapper:
         options.headless = headless
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(1000)
+        self.driver.set_window_size(1366, 1000)
 
         if not os.path.exists(destination):
             os.makedirs(destination)
@@ -186,9 +184,21 @@ class GisaidCoVScrapper:
                 f.write(line.strip())
                 f.write("\n")
 
+    def _scroll_shim(self, element):
+        x = element.location['x']
+        y = element.location['y']
+        scroll_by_coord = 'window.scrollTo(%s,%s);' % (
+            x,
+            y
+        )
+        scroll_nav_out_of_way = 'window.scrollBy(0, -120);'
+        self.driver.execute_script(scroll_by_coord)
+        self.driver.execute_script(scroll_nav_out_of_way)
+
     def _action_click(self, element):
         action = ActionChains(self.driver)
         action.move_to_element(element).perform()
+
         time.sleep(1)
         element.click()
         time.sleep(1)
@@ -196,55 +206,3 @@ class GisaidCoVScrapper:
     def go_to_next_page(self):
         self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
         self._update_metainfo()
-
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-def parse_args():
-    parser=argparse.ArgumentParser()
-    parser.add_argument('--username', '-u', help="Username for GISAID", type=str)
-    parser.add_argument('--password', '-p', help="Password for GISAID", type=str)
-    parser.add_argument('--filename', '-f', help="Path to file with credentials (alternative, default: credentials.txt)", type=str, default="credentials.txt")
-    parser.add_argument('--destination', '-d', help="Destination directory (default: fastas/)", type=str, default="fastas/")
-    parser.add_argument('--headless', '-q', help="Headless mode of scraping (experimental)", type=str2bool, nargs='?', default=False)
-    parser.add_argument('--whole', '-w', help="Scrap whole genomes only", type=str2bool, nargs='?', default=False)
-
-    args = parser.parse_args()
-    args.headless = True if args.headless is None else args.headless
-    args.whole = True if args.whole is None else args.whole  
-    return args
-
-if __name__ == "__main__":
-    args = parse_args()
-
-    if args.username is None or args.password is None:
-        if args.filename is None:
-            print(parser.format_help())
-            sys.exit(-1)
-        try:
-            with open(args.filename) as f:
-                login = f.readline()
-                passwd = f.readline()
-        except FileNotFoundError:
-            print("File not found.")
-            print(parser.format_help())
-            sys.exit(-1)
-    else:
-        login = args.username
-        passwd = args.password
-
-    scrapper = GisaidCoVScrapper(args.headless, args.whole, args.destination)
-    scrapper.login(login, passwd)
-    scrapper.load_epicov()
-
-    while not scrapper.finished:
-        scrapper.download_from_curr_page()
-        scrapper.go_to_next_page()
-    print("New samples:", scrapper.new_downloaded)
