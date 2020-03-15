@@ -66,4 +66,4 @@ The whole and partial genom sequences from GISAID will be downloaded into `fasta
 
 as long as they were provided.
 You can interrupt the download and resume it later, the samples won't be downloaded twice. 
-
+The tool has only been tested on windows 10.
