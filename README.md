@@ -16,7 +16,7 @@ password
 
 ## Usage
 ```
-usage: gisaid_scrapper.py [-h] [--username USERNAME] [--password PASSWORD]  
+usage: scrap.py [-h] [--username USERNAME] [--password PASSWORD]  
                           [--filename FILENAME] [--destination DESTINATION] 
                           [--headless [HEADLESS]] [--whole [WHOLE]]
 
@@ -32,13 +32,13 @@ optional arguments:
   --destination DESTINATION, -d DESTINATION
                         Destination directory (default: fastas/)
   --headless [HEADLESS], -q [HEADLESS]
-                        Headless mode of scraping (experimental)
+                        Headless mode (no browser window)
   --whole [WHOLE], -w [WHOLE]
                         Scrap whole genomes only
 ```
 Example:
 ```
-python3 gisaid_scrapper.py -u user -p pass -w
+python3 scrap.py -u user -p pass -w
 ```
 should run the scrapper with username `user` and password `pass`, downloading only whole sequence data.
 
@@ -66,4 +66,4 @@ The whole and partial genom sequences from GISAID will be downloaded into `fasta
 
 as long as they were provided.
 You can interrupt the download and resume it later, the samples won't be downloaded twice. 
-
+The tool has only been tested on windows 10.
