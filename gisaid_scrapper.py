@@ -180,8 +180,10 @@ class GisaidCoVScrapper:
 
         # Save FASTA
         with open(f"{self.destination}/{name}.fasta", "w") as f:
-            for line in fasta.upper().split("\n"):
-                f.write(line.strip())
+            header = fasta.split("\n")[0]
+            f.write(header.strip()+"\n")
+            for line in fasta.split("\n")[1:]:
+                f.write(line.strip().upper())
                 f.write("\n")
 
     def _scroll_shim(self, element):
