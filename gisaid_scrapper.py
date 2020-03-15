@@ -199,9 +199,7 @@ class GisaidCoVScrapper:
         action = ActionChains(self.driver)
         action.move_to_element(element).perform()
 
-        time.sleep(1)
         element.click()
-        time.sleep(1)
 
     def go_to_next_page(self):
         self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
