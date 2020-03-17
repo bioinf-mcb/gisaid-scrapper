@@ -5,7 +5,7 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as cond
-from selenium.common.exceptions import NoAlertPresentException, MoveTargetOutOfBoundsException, TimeoutException
+from selenium.common.exceptions import NoAlertPresentException, MoveTargetOutOfBoundsException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.common.action_chains import ActionChains
@@ -54,7 +54,7 @@ class GisaidCoVScrapper:
         options.headless = headless
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(1000)
-        self.driver.set_window_size(1366, 1000)
+        self.driver.set_window_size(1366, 2000)
 
         if not os.path.exists(destination):
             os.makedirs(destination)
@@ -87,7 +87,7 @@ class GisaidCoVScrapper:
         self._go_to_seq_browser()
 
         if self.whole_genome_only:
-            print("Clicking")
+            time.sleep(2)
             parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
             inp = parent_form.find_element_by_tag_name("input")
             inp.click()
@@ -159,9 +159,12 @@ class GisaidCoVScrapper:
 
     def _save_data(self, iframe, name):
         self.driver.switch_to.frame(iframe)
+        time.sleep(2)
         pre = self.driver.find_elements_by_tag_name("pre")[0]
         fasta = pre.text
-
+        if self.whole_genome_only:
+            if len(fasta)<29000:
+                print("Full sequence was not downloaded, rerun will be needed")
         # Handle metadata
         metadata = self.driver.find_elements_by_xpath(
             "//b[contains(text(), 'Sample information')]/../../following-sibling::tr"
@@ -199,9 +202,18 @@ class GisaidCoVScrapper:
 
     def _action_click(self, element):
         action = ActionChains(self.driver)
-        action.move_to_element(element).perform()
+        try:
+            action.move_to_element(element).perform()
+            element.click()
+        except MoveTargetOutOfBoundsException:
+            self._scroll_shim(element)
+            action.move_to_element(element).perform()
+            element.click()
+        except ElementClickInterceptedException:
+            self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+            action.move_to_element(element).perform()
+            element.click()
 
-        element.click()
 
     def go_to_next_page(self):
         self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
