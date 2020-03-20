@@ -114,7 +114,7 @@ class GisaidCoVScrapper:
 
     def _update_cache(self):
         res = [
-            i.split("\\")[-1].split(".")[0]
+            i.split("/")[-1].split(".")[0]
             for i in glob.glob(f"{self.destination}/*.fasta")
         ]
         self.already_downloaded = res
