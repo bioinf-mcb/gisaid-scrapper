@@ -108,7 +108,7 @@ class GisaidCoVScrapper:
         self.samples_count = int(
             self.driver.find_elements_by_xpath("//*[contains(text(), 'Total:')]")[
                 0
-            ].text.split(" ")[1]
+            ].text.split(" ")[1].replace(",", "")
         )
         self._update_cache()
 
