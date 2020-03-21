@@ -133,7 +133,7 @@ class GisaidCoVScrapper:
 
         parent_form = self.driver.find_element_by_class_name("yui-dt-data")
         rows = parent_form.find_elements_by_tag_name("tr")
-        # time.sleep(2)
+        time.sleep(2)
 
         for i in tqdm.trange(len(rows)):
             self._download_row(parent_form, i)
