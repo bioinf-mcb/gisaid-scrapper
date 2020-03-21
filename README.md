@@ -40,7 +40,12 @@ Example:
 ```
 python3 scrap.py -u user -p pass -w
 ```
-should run the scrapper with username `user` and password `pass`, downloading only whole sequence data.
+run the scrapper with username `user` and password `pass`, downloading only whole sequence data.
+```
+python3 scrap.py -w -q -d whole_genome
+```
+run the scrapper in headless mode with username and password read from `credentials.txt`, downloading only whole sequence data
+into `whole_genome` directory.
 
 ## Result
 The whole and partial genom sequences from GISAID will be downloaded into `fastas/` directory. `metadata.tsv` file will also be created, containing following information for every sample:
