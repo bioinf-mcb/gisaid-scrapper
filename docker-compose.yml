@@ -1,0 +1,31 @@
+version: "3.0"
+
+services:
+    selenium:
+        image: selenium/standalone-firefox
+        networks: 
+            - net
+        ports:
+            - "4444:4444"
+        shm_size: "2g"
+   
+    gisaid_scrapper:
+        image: pawelkulig/gisaid_scrapper:1.0
+        depends_on: 
+            - selenium
+        networks: 
+            - net
+        volumes: 
+            - .:/home
+        environment:
+            - PYTHONUNBUFFERED=1
+            - DOCKER_MODE=1
+            - GISAID_USER=${GISAID_USER}
+            - GISAID_PASS=${GISAID_PASS}
+            - WHOLE_GENOME=${WHOLE_GENOME}
+            - DESTINATION=${DESTINATION}
+        env_file:
+            - .env
+networks:
+    net:
+

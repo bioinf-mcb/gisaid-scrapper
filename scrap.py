@@ -1,7 +1,6 @@
 import argparse, sys
 from gisaid_scrapper import GisaidCoVScrapper
-
-
+import os
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -28,30 +27,39 @@ def parse_args():
     return args
 
 def get_credentials(args):
-    if args.username is None or args.password is None:
-        if args.filename is None:
-            print(parser.format_help())
-            sys.exit(-1)
-        try:
-            with open(args.filename) as f:
-                login = f.readline()
-                passwd = f.readline()
-        except FileNotFoundError:
-            print("File not found.")
-            print(parser.format_help())
-            sys.exit(-1)
+    if "DOCKER_MODE" in os.environ:
+        login = os.getenv("GISAID_USER")
+        passwd = os.getenv("GISAID_PASS")
+        destination = os.getenv("DESTINATION")
+        whole = os.getenv("WHOLE_GENOME")==1
     else:
-        login = args.username
-        passwd = args.password
+        if args.username is None or args.password is None:
+            if args.filename is None:
+                print(parser.format_help())
+                sys.exit(-1)
+            try:
+                with open(args.filename) as f:
+                    login = f.readline()
+                    passwd = f.readline()
+            except FileNotFoundError:
+                print("File not found.")
+                print(parser.format_help())
+                sys.exit(-1)
+        else:
+            login = args.username
+            passwd = args.password
 
-    return login, passwd
+        whole = args.whole
+        destination = args.destination
+
+
+    return login, passwd, whole, destination
 
 if __name__ == "__main__":
     args = parse_args()
         
-    login, passwd = get_credentials(args)
-
-    scrapper = GisaidCoVScrapper(args.headless, args.whole, args.destination)
+    login, passwd, whole, destination = get_credentials(args)
+    scrapper = GisaidCoVScrapper(args.headless, whole, destination)
     scrapper.login(login, passwd)
     scrapper.load_epicov()
 
