@@ -88,7 +88,7 @@ class GisaidCoVScrapper:
 
     def login(self, username: str, password: str):
         self.driver.get("https://platform.gisaid.org/epi3/frontend")
-        time.sleep(2)
+        time.sleep(5)
         login = self.driver.find_element_by_name("login")
         login.send_keys(username)
 
@@ -243,7 +243,6 @@ class GisaidCoVScrapper:
 
     def go_to_next_page(self):
         try:
-            :
             self.driver.find_element_by_xpath(
                 "//*[contains(text(), 'next >')]").click()
         except ElementClickInterceptedException:
