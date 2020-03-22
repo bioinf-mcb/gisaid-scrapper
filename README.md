@@ -72,3 +72,22 @@ The whole and partial genom sequences from GISAID will be downloaded into `fasta
 as long as they were provided.
 You can interrupt the download and resume it later, the samples won't be downloaded twice. 
 The tool has only been tested on windows 10.
+
+
+## Docker Image
+It is also possible to run this scrapper in headless mode inside docker container. This allows to use it on any Operating System that is able to run Docker. Image created by Pawel Kulig and hosted on his DockerHub. Since password and username have to be provided per user, container has to use volume to load neccessary files. Script in container is by default executed with --headless option. Credentials should be provided in credentials.txt file located in gisaid_scrapper directory. 
+
+Aside from gisaid_scrapper container Selenium contianer is used to operate in client server paradigm.
+
+To run scrapper in container run:
+```
+docker-compose up
+```
+To run it detached add "-d" option.
+
+To build Docker Image on your own run below command inside gisaid_scrapper directory:
+```
+docker build --tag name:tag .
+```
+geckodriver file inside gisaid_scrapper directory is required to perform this operation.
+See: https://github.com/mozilla/geckodriver/releases
