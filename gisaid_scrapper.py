@@ -52,6 +52,10 @@ class GisaidCoVScrapper:
 
         options = Options()
         options.headless = headless
+        if headless:
+            options.add_argument("--headless")
+            options.add_argument('--disable-gpu')
+            options.add_argument('--no-sandbox')
         self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(1000)
         self.driver.set_window_size(1366, 2000)
