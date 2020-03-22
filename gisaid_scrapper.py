@@ -13,6 +13,7 @@ import tqdm
 import glob
 import os
 import sys
+from urllib3.exceptions import MaxRetryError
 
 METADATA_COLUMNS = [
     "Accession",
@@ -56,7 +57,19 @@ class GisaidCoVScrapper:
             options.add_argument("--headless")
             options.add_argument('--disable-gpu')
             options.add_argument('--no-sandbox')
-        self.driver = webdriver.Firefox(options=options)
+            for i in range(30):
+                time.sleep(1)
+                try:
+                    self.driver = webdriver.Remote(
+                        command_executor="http://selenium:4444/wd/hub",
+                        desired_capabilities=options.to_capabilities()
+                    )
+                    break
+                except MaxRetryError:
+                    pass 
+
+        else:
+            self.driver = webdriver.Firefox(options=options)
         self.driver.implicitly_wait(1000)
         self.driver.set_window_size(1366, 2000)
 
@@ -74,6 +87,7 @@ class GisaidCoVScrapper:
         self.driver.get("https://platform.gisaid.org/epi3/frontend")
         time.sleep(2)
         login = self.driver.find_element_by_name("login")
+        print(login)
         login.send_keys(username)
 
         passwd = self.driver.find_element_by_name("password")
