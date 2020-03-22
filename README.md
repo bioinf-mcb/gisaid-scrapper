@@ -75,7 +75,9 @@ The tool has only been tested on windows 10.
 
 
 ## Docker Image
-It is also possible to run this scrapper in headless mode inside docker container. This allows to use it on any Operating System that is able to run Docker. Image created by Pawel Kulig and hosted on his DockerHub. Since password and username have to be provided per user, container has to use volume to load neccessary files. Script in container is by default executed with --headless option. Credentials should be provided in credentials.txt file located in gisaid_scrapper directory. 
+It is also possible to run this scrapper in headless mode inside docker container. This allows to use it on any Operating System that is able to run Docker. Image created by Pawel Kulig and hosted on his DockerHub. 
+
+In this version, all parameters are provided via `.env` file -- login, password, destination, and whole genome flag.
 
 Aside from gisaid_scrapper container Selenium contianer is used to operate in client server paradigm.
 

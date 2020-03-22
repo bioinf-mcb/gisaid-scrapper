@@ -13,12 +13,19 @@ services:
         image: pawelkulig/gisaid_scrapper:1.0
         depends_on: 
             - selenium
-        build: .
         networks: 
             - net
         volumes: 
             - .:/home
-
+        environment:
+            - PYTHONUNBUFFERED=1
+            - DOCKER_MODE=1
+            - GISAID_USER=${GISAID_USER}
+            - GISAID_PASS=${GISAID_PASS}
+            - WHOLE_GENOME=${WHOLE_GENOME}
+            - DESTINATION=${DESTINATION}
+        env_file:
+            - .env
 networks:
     net:
 

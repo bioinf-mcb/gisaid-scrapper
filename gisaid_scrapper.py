@@ -36,12 +36,13 @@ METADATA_COLUMNS = [
     "Length"
 ]
 
+
 class GisaidCoVScrapper:
     def __init__(
         self,
         headless: bool = False,
         whole_genome_only: bool = True,
-        destination: str = "fastas",
+        destination: str = "fastas"
     ):
         self.whole_genome_only = whole_genome_only
 
@@ -53,7 +54,7 @@ class GisaidCoVScrapper:
 
         options = Options()
         options.headless = headless
-        if headless:
+        if headless and "DOCKER_MODE" in os.environ:
             options.add_argument("--headless")
             options.add_argument('--disable-gpu')
             options.add_argument('--no-sandbox')
@@ -66,7 +67,7 @@ class GisaidCoVScrapper:
                     )
                     break
                 except MaxRetryError:
-                    pass 
+                    pass
 
         else:
             self.driver = webdriver.Firefox(options=options)
@@ -78,9 +79,11 @@ class GisaidCoVScrapper:
 
         self._update_cache()
         if os.path.isfile(destination + "/metadata.tsv"):
-            self.metadata_handle = open(destination + "/metadata.tsv", "a", encoding='utf-8')
+            self.metadata_handle = open(
+                destination + "/metadata.tsv", "a", encoding='utf-8')
         else:
-            self.metadata_handle = open(destination + "/metadata.tsv", "w", encoding='utf-8')
+            self.metadata_handle = open(
+                destination + "/metadata.tsv", "w", encoding='utf-8')
             self.metadata_handle.write("\t".join(METADATA_COLUMNS) + "\n")
 
     def login(self, username: str, password: str):
@@ -91,9 +94,11 @@ class GisaidCoVScrapper:
 
         passwd = self.driver.find_element_by_name("password")
         passwd.send_keys(password)
-        login_box = self.driver.find_element_by_class_name("form_button_submit")
+        login_box = self.driver.find_element_by_class_name(
+            "form_button_submit")
 
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
         self.driver.execute_script(
             "document.getElementsByClassName('form_button_submit')[0].click()"
         )
@@ -105,21 +110,25 @@ class GisaidCoVScrapper:
 
         if self.whole_genome_only:
             time.sleep(2)
-            parent_form = self.driver.find_element_by_class_name("sys-form-fi-cb")
+            parent_form = self.driver.find_element_by_class_name(
+                "sys-form-fi-cb")
             inp = parent_form.find_element_by_tag_name("input")
             inp.click()
-            time.sleep(2)
+            time.sleep(5)
 
         self._update_metainfo()
 
     def _go_to_seq_browser(self):
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
         self.driver.find_element_by_link_text("EpiCoV™").click()
 
         time.sleep(3)
 
-        self.driver.execute_script("document.getElementById('sys_curtain').remove()")
-        self.driver.find_elements_by_xpath("//*[contains(text(), 'Browse')]")[0].click()
+        self.driver.execute_script(
+            "document.getElementById('sys_curtain').remove()")
+        self.driver.find_elements_by_xpath(
+            "//*[contains(text(), 'Browse')]")[0].click()
 
     def _update_metainfo(self):
         self.samples_count = int(
@@ -180,7 +189,7 @@ class GisaidCoVScrapper:
         pre = self.driver.find_elements_by_tag_name("pre")[0]
         fasta = pre.text
         if self.whole_genome_only:
-            if len(fasta)<29000:
+            if len(fasta) < 29000:
                 print("Full sequence was not downloaded, rerun will be needed")
         # Handle metadata
         metadata = self.driver.find_elements_by_xpath(
@@ -227,11 +236,19 @@ class GisaidCoVScrapper:
             action.move_to_element(element).perform()
             element.click()
         except ElementClickInterceptedException:
-            self.driver.execute_script("document.getElementById('sys_curtain').remove()")
+            self.driver.execute_script(
+                "document.getElementById('sys_curtain').remove()")
             action.move_to_element(element).perform()
             element.click()
 
-
     def go_to_next_page(self):
-        self.driver.find_element_by_xpath("//*[contains(text(), 'next >')]").click()
+        try:
+            :
+            self.driver.find_element_by_xpath(
+                "//*[contains(text(), 'next >')]").click()
+        except ElementClickInterceptedException:
+            self.driver.execute_script(
+                "document.getElementById('sys_curtain').remove()")
+            self.driver.find_element_by_xpath(
+                "//*[contains(text(), 'next >')]").click()
         self._update_metainfo()
