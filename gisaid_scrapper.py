@@ -46,7 +46,7 @@ class GisaidCoVScrapper:
     ):
         self.whole_genome_only = whole_genome_only
 
-        self.destination = destination
+        self.destination = destination.rstrip("/")
         self.finished = False
         self.already_downloaded = 0
         self.samples_count = None
@@ -140,7 +140,7 @@ class GisaidCoVScrapper:
 
     def _update_cache(self):
         res = [
-            i.split("/")[-1].split(".")[0]
+            i.split("\\")[-1].split("/")[-1].split(".")[0]
             for i in glob.glob(f"{self.destination}/*.fasta")
         ]
         self.already_downloaded = res
