@@ -5,7 +5,7 @@ import requests
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as cond
-from selenium.common.exceptions import NoAlertPresentException, MoveTargetOutOfBoundsException, TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import NoAlertPresentException, MoveTargetOutOfBoundsException, TimeoutException, ElementClickInterceptedException, StaleElementReferenceException, WebDriverException
 from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.common.action_chains import ActionChains
@@ -162,12 +162,20 @@ class GisaidCoVScrapper:
         time.sleep(2)
 
         for i in tqdm.trange(len(rows)):
-            self._download_row(parent_form, i)
+            for _ in range(10):
+                try:
+                    self._download_row(parent_form, i)
+                    break
+                except (StaleElementReferenceException, WebDriverException):
+                    self.driver.switch_to.default_content()
+                    parent_form = self.driver.find_element_by_class_name("yui-dt-data")
+                    time.sleep(1)
+
 
     def _download_row(self, parent_form, row_id):
         row = parent_form.find_elements_by_tag_name("tr")[row_id]
-        col = row.find_elements_by_tag_name("td")[1]
-        name = row.find_elements_by_tag_name("td")[2].text
+        col = row.find_elements_by_tag_name("td")[2]
+        name = row.find_elements_by_tag_name("td")[3].text.replace("/", "_")
         if name in self.already_downloaded:
             return
 

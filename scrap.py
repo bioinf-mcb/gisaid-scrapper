@@ -62,8 +62,16 @@ if __name__ == "__main__":
     scrapper = GisaidCoVScrapper(args.headless, whole, destination)
     scrapper.login(login, passwd)
     scrapper.load_epicov()
+    page = 0
+
+    # for i in range(150):
+    #     scrapper.go_to_next_page()
+    #     page += 1
 
     while not scrapper.finished:
+        print("Page:", page)
         scrapper.download_from_curr_page()
         scrapper.go_to_next_page()
+        page += 1
+
     print("New samples:", scrapper.new_downloaded)
