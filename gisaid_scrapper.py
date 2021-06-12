@@ -128,7 +128,7 @@ class GisaidCoVScrapper:
         self.driver.execute_script(
             "document.getElementById('sys_curtain').remove()")
         self.driver.find_elements_by_xpath(
-            "//*[contains(text(), 'Browse')]")[0].click()
+            "//*[contains(text(), 'Search')]")[0].click()
 
     def _update_metainfo(self):
         self.samples_count = int(
@@ -252,10 +252,10 @@ class GisaidCoVScrapper:
     def go_to_next_page(self):
         try:
             self.driver.find_element_by_xpath(
-                "//*[contains(text(), 'next >')]").click()
+                "//a[@title='Next Page']").click()
         except ElementClickInterceptedException:
             self.driver.execute_script(
                 "document.getElementById('sys_curtain').remove()")
             self.driver.find_element_by_xpath(
-                "//*[contains(text(), 'next >')]").click()
+                "//a[@title='Next Page']").click()
         self._update_metainfo()
