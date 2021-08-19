@@ -24,7 +24,7 @@ def parse_args():
     args = parser.parse_args()
     args.headless = True if args.headless is None else args.headless
     args.whole = True if args.whole is None else args.whole  
-    return args
+    return parser, args
 
 def get_credentials(args):
     if "DOCKER_MODE" in os.environ:
@@ -35,16 +35,14 @@ def get_credentials(args):
     else:
         if args.username is None or args.password is None:
             if args.filename is None:
-                print(parser.format_help())
-                sys.exit(-1)
+                raise ValueError
             try:
                 with open(args.filename) as f:
                     login = f.readline()
                     passwd = f.readline()
             except FileNotFoundError:
                 print("File not found.")
-                print(parser.format_help())
-                sys.exit(-1)
+                raise ValueError
         else:
             login = args.username
             passwd = args.password
@@ -56,22 +54,28 @@ def get_credentials(args):
     return login, passwd, whole, destination
 
 if __name__ == "__main__":
-    args = parse_args()
+    parser, args = parse_args()
         
-    login, passwd, whole, destination = get_credentials(args)
+    try:
+        login, passwd, whole, destination = get_credentials(args)
+    except ValueError:
+        print(parser.format_help())
+        sys.exit(-1)
     scrapper = GisaidCoVScrapper(args.headless, whole, destination)
     scrapper.login(login, passwd)
-    scrapper.load_epicov()
-    page = 0
+    # scrapper.load_epicov()
+    # page = 0
 
     # for i in range(150):
     #     scrapper.go_to_next_page()
     #     page += 1
 
-    while not scrapper.finished:
-        print("Page:", page)
-        scrapper.download_from_curr_page()
-        scrapper.go_to_next_page()
-        page += 1
+    # while not scrapper.finished:
+    #     print("Page:", page)
+    #     scrapper.download_from_curr_page()
+    #     scrapper.go_to_next_page()
+    #     page += 1
 
+    scrapper.download_packages('metadata_tsv')
+    scrapper.download_packages('fasta.tar')
     print("New samples:", scrapper.new_downloaded)

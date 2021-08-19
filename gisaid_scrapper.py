@@ -52,6 +52,12 @@ class GisaidCoVScrapper:
         self.samples_count = None
         self.new_downloaded = 0
 
+        fp = webdriver.FirefoxProfile()
+        fp.set_preference("browser.download.folderList",2)
+        fp.set_preference("browser.download.manager.showWhenStarting", False)
+        fp.set_preference("browser.download.dir", os.getcwd())
+        fp.set_preference("browser.helperApps.neverAsk.saveToDisk","application/octet-stream")
+
         options = Options()
         options.headless = headless
         if headless and "DOCKER_MODE" in os.environ:
@@ -70,10 +76,9 @@ class GisaidCoVScrapper:
                     pass
 
         else:
-            self.driver = webdriver.Firefox(options=options)
+            self.driver = webdriver.Firefox(fp, options=options)
         self.driver.implicitly_wait(1000)
         self.driver.set_window_size(1366, 2000)
-
         if not os.path.exists(destination):
             os.makedirs(destination)
 
@@ -259,3 +264,34 @@ class GisaidCoVScrapper:
             self.driver.find_element_by_xpath(
                 "//a[@title='Next Page']").click()
         self._update_metainfo()
+
+    def __find_by_attribute(self, elements, attribute, value):
+        for i in elements:
+            if value in str(i.get_attribute(attribute)):
+                return i
+
+    def download_packages(self, package_name):
+        # Open 'downloads' menu
+        action_icons = self.driver.find_elements_by_class_name(
+            "sys-actionbar-action")
+        download = self.__find_by_attribute(action_icons, "onclick", "Downloads")
+        assert download is not None, "Download button couldn't be found!"
+        self._action_click(download)
+        iframe = self.driver.find_element_by_tag_name("iframe")
+        self.driver.switch_to.frame(iframe)
+
+        # Get proper package
+        action_icons = self.driver.find_elements_by_class_name("downicon")
+        download = self.__find_by_attribute(action_icons, "onclick", package_name)
+        assert download is not None, "Expected button couldn't be found!"
+        self._action_click(download)
+        iframe = self.driver.find_elements_by_tag_name("iframe")[-1]
+        self.driver.switch_to.frame(iframe)
+
+        agreement = self.driver.find_element_by_xpath("//span[text()='I agree to the terms and conditions']/../input")
+        self._action_click(agreement)
+        
+        action_icons = self.driver.find_elements_by_tag_name("img")
+        download = self.__find_by_attribute(action_icons, "src", 'data_down')
+        assert download is not None, "Expected button couldn't be found!"
+        self._action_click(download)
